@@ -859,16 +859,16 @@ func DefaultCreateTestTypes(ctx context.Context, in *TestTypes, db *gorm1.DB) (*
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(TestTypesORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(TestTypesORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(TestTypesORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(TestTypesORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -876,11 +876,11 @@ func DefaultCreateTestTypes(ctx context.Context, in *TestTypes, db *gorm1.DB) (*
 	return &pbResponse, err
 }
 
-type TestTypesORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type TestTypesORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type TestTypesORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type TestTypesORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultApplyFieldMaskTestTypes patches an pbObject with patcher according to a field mask.
@@ -1043,16 +1043,16 @@ func DefaultCreateTypeWithID(ctx context.Context, in *TypeWithID, db *gorm1.DB) 
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -1060,11 +1060,11 @@ func DefaultCreateTypeWithID(ctx context.Context, in *TypeWithID, db *gorm1.DB) 
 	return &pbResponse, err
 }
 
-type TypeWithIDORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type TypeWithIDORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type TypeWithIDORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type TypeWithIDORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultReadTypeWithID executes a basic gorm read call
@@ -1126,8 +1126,8 @@ func DefaultDeleteTypeWithID(ctx context.Context, in *TypeWithID, db *gorm1.DB) 
 	if ormObj.Id == 0 {
 		return errors.New("A non-zero ID value is required for a delete call")
 	}
-	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithBeforeDelete); ok {
-		if db, err = hook.BeforeDelete(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithBeforeDeleteORM); ok {
+		if db, err = hook.BeforeDeleteORM(ctx, db); err != nil {
 			return err
 		}
 	}
@@ -1135,17 +1135,17 @@ func DefaultDeleteTypeWithID(ctx context.Context, in *TypeWithID, db *gorm1.DB) 
 	if err != nil {
 		return err
 	}
-	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithAfterDelete); ok {
-		err = hook.AfterDelete(ctx, db)
+	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithAfterDeleteORM); ok {
+		err = hook.AfterDeleteORM(ctx, db)
 	}
 	return err
 }
 
-type TypeWithIDORMWithBeforeDelete interface {
-	BeforeDelete(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type TypeWithIDORMWithBeforeDeleteORM interface {
+	BeforeDeleteORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type TypeWithIDORMWithAfterDelete interface {
-	AfterDelete(context.Context, *gorm1.DB) error
+type TypeWithIDORMWithAfterDeleteORM interface {
+	AfterDeleteORM(context.Context, *gorm1.DB) error
 }
 
 func DefaultDeleteTypeWithIDSet(ctx context.Context, in []*TypeWithID, db *gorm1.DB) error {
@@ -1616,16 +1616,16 @@ func DefaultCreateMultiaccountTypeWithID(ctx context.Context, in *MultiaccountTy
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -1633,11 +1633,11 @@ func DefaultCreateMultiaccountTypeWithID(ctx context.Context, in *MultiaccountTy
 	return &pbResponse, err
 }
 
-type MultiaccountTypeWithIDORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type MultiaccountTypeWithIDORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type MultiaccountTypeWithIDORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type MultiaccountTypeWithIDORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultReadMultiaccountTypeWithID executes a basic gorm read call
@@ -1699,8 +1699,8 @@ func DefaultDeleteMultiaccountTypeWithID(ctx context.Context, in *MultiaccountTy
 	if ormObj.Id == 0 {
 		return errors.New("A non-zero ID value is required for a delete call")
 	}
-	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithBeforeDelete); ok {
-		if db, err = hook.BeforeDelete(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithBeforeDeleteORM); ok {
+		if db, err = hook.BeforeDeleteORM(ctx, db); err != nil {
 			return err
 		}
 	}
@@ -1708,17 +1708,17 @@ func DefaultDeleteMultiaccountTypeWithID(ctx context.Context, in *MultiaccountTy
 	if err != nil {
 		return err
 	}
-	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithAfterDelete); ok {
-		err = hook.AfterDelete(ctx, db)
+	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithAfterDeleteORM); ok {
+		err = hook.AfterDeleteORM(ctx, db)
 	}
 	return err
 }
 
-type MultiaccountTypeWithIDORMWithBeforeDelete interface {
-	BeforeDelete(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type MultiaccountTypeWithIDORMWithBeforeDeleteORM interface {
+	BeforeDeleteORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type MultiaccountTypeWithIDORMWithAfterDelete interface {
-	AfterDelete(context.Context, *gorm1.DB) error
+type MultiaccountTypeWithIDORMWithAfterDeleteORM interface {
+	AfterDeleteORM(context.Context, *gorm1.DB) error
 }
 
 func DefaultDeleteMultiaccountTypeWithIDSet(ctx context.Context, in []*MultiaccountTypeWithID, db *gorm1.DB) error {
@@ -2031,16 +2031,16 @@ func DefaultCreateMultiaccountTypeWithoutID(ctx context.Context, in *Multiaccoun
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithoutIDORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithoutIDORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithoutIDORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithoutIDORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -2048,11 +2048,11 @@ func DefaultCreateMultiaccountTypeWithoutID(ctx context.Context, in *Multiaccoun
 	return &pbResponse, err
 }
 
-type MultiaccountTypeWithoutIDORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type MultiaccountTypeWithoutIDORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type MultiaccountTypeWithoutIDORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type MultiaccountTypeWithoutIDORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultApplyFieldMaskMultiaccountTypeWithoutID patches an pbObject with patcher according to a field mask.
@@ -2152,16 +2152,16 @@ func DefaultCreatePrimaryUUIDType(ctx context.Context, in *PrimaryUUIDType, db *
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -2169,11 +2169,11 @@ func DefaultCreatePrimaryUUIDType(ctx context.Context, in *PrimaryUUIDType, db *
 	return &pbResponse, err
 }
 
-type PrimaryUUIDTypeORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type PrimaryUUIDTypeORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type PrimaryUUIDTypeORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type PrimaryUUIDTypeORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultReadPrimaryUUIDType executes a basic gorm read call
@@ -2235,8 +2235,8 @@ func DefaultDeletePrimaryUUIDType(ctx context.Context, in *PrimaryUUIDType, db *
 	if ormObj.Id == nil || *ormObj.Id == go_uuid1.Nil {
 		return errors.New("A non-zero ID value is required for a delete call")
 	}
-	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithBeforeDelete); ok {
-		if db, err = hook.BeforeDelete(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithBeforeDeleteORM); ok {
+		if db, err = hook.BeforeDeleteORM(ctx, db); err != nil {
 			return err
 		}
 	}
@@ -2244,17 +2244,17 @@ func DefaultDeletePrimaryUUIDType(ctx context.Context, in *PrimaryUUIDType, db *
 	if err != nil {
 		return err
 	}
-	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithAfterDelete); ok {
-		err = hook.AfterDelete(ctx, db)
+	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithAfterDeleteORM); ok {
+		err = hook.AfterDeleteORM(ctx, db)
 	}
 	return err
 }
 
-type PrimaryUUIDTypeORMWithBeforeDelete interface {
-	BeforeDelete(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type PrimaryUUIDTypeORMWithBeforeDeleteORM interface {
+	BeforeDeleteORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type PrimaryUUIDTypeORMWithAfterDelete interface {
-	AfterDelete(context.Context, *gorm1.DB) error
+type PrimaryUUIDTypeORMWithAfterDeleteORM interface {
+	AfterDeleteORM(context.Context, *gorm1.DB) error
 }
 
 func DefaultDeletePrimaryUUIDTypeSet(ctx context.Context, in []*PrimaryUUIDType, db *gorm1.DB) error {
@@ -2588,16 +2588,16 @@ func DefaultCreatePrimaryStringType(ctx context.Context, in *PrimaryStringType, 
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -2605,11 +2605,11 @@ func DefaultCreatePrimaryStringType(ctx context.Context, in *PrimaryStringType, 
 	return &pbResponse, err
 }
 
-type PrimaryStringTypeORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type PrimaryStringTypeORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type PrimaryStringTypeORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type PrimaryStringTypeORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultReadPrimaryStringType executes a basic gorm read call
@@ -2671,8 +2671,8 @@ func DefaultDeletePrimaryStringType(ctx context.Context, in *PrimaryStringType, 
 	if ormObj.Id == "" {
 		return errors.New("A non-zero ID value is required for a delete call")
 	}
-	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithBeforeDelete); ok {
-		if db, err = hook.BeforeDelete(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithBeforeDeleteORM); ok {
+		if db, err = hook.BeforeDeleteORM(ctx, db); err != nil {
 			return err
 		}
 	}
@@ -2680,17 +2680,17 @@ func DefaultDeletePrimaryStringType(ctx context.Context, in *PrimaryStringType, 
 	if err != nil {
 		return err
 	}
-	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithAfterDelete); ok {
-		err = hook.AfterDelete(ctx, db)
+	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithAfterDeleteORM); ok {
+		err = hook.AfterDeleteORM(ctx, db)
 	}
 	return err
 }
 
-type PrimaryStringTypeORMWithBeforeDelete interface {
-	BeforeDelete(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type PrimaryStringTypeORMWithBeforeDeleteORM interface {
+	BeforeDeleteORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type PrimaryStringTypeORMWithAfterDelete interface {
-	AfterDelete(context.Context, *gorm1.DB) error
+type PrimaryStringTypeORMWithAfterDeleteORM interface {
+	AfterDeleteORM(context.Context, *gorm1.DB) error
 }
 
 func DefaultDeletePrimaryStringTypeSet(ctx context.Context, in []*PrimaryStringType, db *gorm1.DB) error {
@@ -3024,16 +3024,16 @@ func DefaultCreateTestTag(ctx context.Context, in *TestTag, db *gorm1.DB) (*Test
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(TestTagORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(TestTagORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(TestTagORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(TestTagORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -3041,11 +3041,11 @@ func DefaultCreateTestTag(ctx context.Context, in *TestTag, db *gorm1.DB) (*Test
 	return &pbResponse, err
 }
 
-type TestTagORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type TestTagORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type TestTagORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type TestTagORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultReadTestTag executes a basic gorm read call
@@ -3107,8 +3107,8 @@ func DefaultDeleteTestTag(ctx context.Context, in *TestTag, db *gorm1.DB) error 
 	if ormObj.Id == "" {
 		return errors.New("A non-zero ID value is required for a delete call")
 	}
-	if hook, ok := interface{}(&ormObj).(TestTagORMWithBeforeDelete); ok {
-		if db, err = hook.BeforeDelete(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(TestTagORMWithBeforeDeleteORM); ok {
+		if db, err = hook.BeforeDeleteORM(ctx, db); err != nil {
 			return err
 		}
 	}
@@ -3116,17 +3116,17 @@ func DefaultDeleteTestTag(ctx context.Context, in *TestTag, db *gorm1.DB) error 
 	if err != nil {
 		return err
 	}
-	if hook, ok := interface{}(&ormObj).(TestTagORMWithAfterDelete); ok {
-		err = hook.AfterDelete(ctx, db)
+	if hook, ok := interface{}(&ormObj).(TestTagORMWithAfterDeleteORM); ok {
+		err = hook.AfterDeleteORM(ctx, db)
 	}
 	return err
 }
 
-type TestTagORMWithBeforeDelete interface {
-	BeforeDelete(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type TestTagORMWithBeforeDeleteORM interface {
+	BeforeDeleteORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type TestTagORMWithAfterDelete interface {
-	AfterDelete(context.Context, *gorm1.DB) error
+type TestTagORMWithAfterDeleteORM interface {
+	AfterDeleteORM(context.Context, *gorm1.DB) error
 }
 
 func DefaultDeleteTestTagSet(ctx context.Context, in []*TestTag, db *gorm1.DB) error {
@@ -3460,16 +3460,16 @@ func DefaultCreateTestTagAssociation(ctx context.Context, in *TestTagAssociation
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(TestTagAssociationORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(TestTagAssociationORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(TestTagAssociationORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(TestTagAssociationORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -3477,11 +3477,11 @@ func DefaultCreateTestTagAssociation(ctx context.Context, in *TestTagAssociation
 	return &pbResponse, err
 }
 
-type TestTagAssociationORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type TestTagAssociationORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type TestTagAssociationORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type TestTagAssociationORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultApplyFieldMaskTestTagAssociation patches an pbObject with patcher according to a field mask.
@@ -3581,16 +3581,16 @@ func DefaultCreatePrimaryIncluded(ctx context.Context, in *PrimaryIncluded, db *
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(PrimaryIncludedORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(PrimaryIncludedORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(PrimaryIncludedORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(PrimaryIncludedORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -3598,11 +3598,11 @@ func DefaultCreatePrimaryIncluded(ctx context.Context, in *PrimaryIncluded, db *
 	return &pbResponse, err
 }
 
-type PrimaryIncludedORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type PrimaryIncludedORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type PrimaryIncludedORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type PrimaryIncludedORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultApplyFieldMaskPrimaryIncluded patches an pbObject with patcher according to a field mask.

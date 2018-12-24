@@ -211,16 +211,16 @@ func DefaultCreateExternalChild(ctx context.Context, in *ExternalChild, db *gorm
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -228,11 +228,11 @@ func DefaultCreateExternalChild(ctx context.Context, in *ExternalChild, db *gorm
 	return &pbResponse, err
 }
 
-type ExternalChildORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type ExternalChildORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type ExternalChildORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type ExternalChildORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultReadExternalChild executes a basic gorm read call
@@ -294,8 +294,8 @@ func DefaultDeleteExternalChild(ctx context.Context, in *ExternalChild, db *gorm
 	if ormObj.Id == "" {
 		return errors.New("A non-zero ID value is required for a delete call")
 	}
-	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeDelete); ok {
-		if db, err = hook.BeforeDelete(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeDeleteORM); ok {
+		if db, err = hook.BeforeDeleteORM(ctx, db); err != nil {
 			return err
 		}
 	}
@@ -303,17 +303,17 @@ func DefaultDeleteExternalChild(ctx context.Context, in *ExternalChild, db *gorm
 	if err != nil {
 		return err
 	}
-	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterDelete); ok {
-		err = hook.AfterDelete(ctx, db)
+	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterDeleteORM); ok {
+		err = hook.AfterDeleteORM(ctx, db)
 	}
 	return err
 }
 
-type ExternalChildORMWithBeforeDelete interface {
-	BeforeDelete(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type ExternalChildORMWithBeforeDeleteORM interface {
+	BeforeDeleteORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type ExternalChildORMWithAfterDelete interface {
-	AfterDelete(context.Context, *gorm1.DB) error
+type ExternalChildORMWithAfterDeleteORM interface {
+	AfterDeleteORM(context.Context, *gorm1.DB) error
 }
 
 func DefaultDeleteExternalChildSet(ctx context.Context, in []*ExternalChild, db *gorm1.DB) error {
@@ -610,16 +610,16 @@ func DefaultCreateBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB) (*Bl
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeCreateORM); ok {
+		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterCreateORM); ok {
+		if err = hook.AfterCreateORM(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -627,11 +627,11 @@ func DefaultCreateBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB) (*Bl
 	return &pbResponse, err
 }
 
-type BlogPostORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type BlogPostORMWithBeforeCreateORM interface {
+	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type BlogPostORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type BlogPostORMWithAfterCreateORM interface {
+	AfterCreateORM(context.Context, *gorm1.DB) error
 }
 
 // DefaultReadBlogPost executes a basic gorm read call
@@ -693,8 +693,8 @@ func DefaultDeleteBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB) erro
 	if ormObj.Id == 0 {
 		return errors.New("A non-zero ID value is required for a delete call")
 	}
-	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeDelete); ok {
-		if db, err = hook.BeforeDelete(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeDeleteORM); ok {
+		if db, err = hook.BeforeDeleteORM(ctx, db); err != nil {
 			return err
 		}
 	}
@@ -702,17 +702,17 @@ func DefaultDeleteBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB) erro
 	if err != nil {
 		return err
 	}
-	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterDelete); ok {
-		err = hook.AfterDelete(ctx, db)
+	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterDeleteORM); ok {
+		err = hook.AfterDeleteORM(ctx, db)
 	}
 	return err
 }
 
-type BlogPostORMWithBeforeDelete interface {
-	BeforeDelete(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type BlogPostORMWithBeforeDeleteORM interface {
+	BeforeDeleteORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type BlogPostORMWithAfterDelete interface {
-	AfterDelete(context.Context, *gorm1.DB) error
+type BlogPostORMWithAfterDeleteORM interface {
+	AfterDeleteORM(context.Context, *gorm1.DB) error
 }
 
 func DefaultDeleteBlogPostSet(ctx context.Context, in []*BlogPost, db *gorm1.DB) error {
