@@ -240,7 +240,7 @@ func DefaultCreateIntPoint(ctx context.Context, in *IntPoint, db *gorm1.DB) (*In
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(IntPointORMWithAfterCreateWithContext); ok {
@@ -390,17 +390,12 @@ func DefaultStrictUpdateIntPoint(ctx context.Context, in *IntPoint, db *gorm1.DB
 	var count int64
 	lockedRow := &IntPointORM{}
 	count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("id=?", ormObj.Id).First(lockedRow).RowsAffected
-	if hook, ok := interface{}(&ormObj).(IntPointORMWithBeforeStrictUpdateCleanup); ok {
-		if db, err = hook.BeforeStrictUpdateCleanup(ctx, db); err != nil {
-			return nil, err
-		}
-	}
 	if hook, ok := interface{}(&ormObj).(IntPointORMWithBeforeStrictUpdateSave); ok {
 		if db, err = hook.BeforeStrictUpdateSave(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Save(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(IntPointORMWithAfterStrictUpdateSave); ok {
@@ -418,9 +413,6 @@ func DefaultStrictUpdateIntPoint(ctx context.Context, in *IntPoint, db *gorm1.DB
 	return &pbResponse, err
 }
 
-type IntPointORMWithBeforeStrictUpdateCleanup interface {
-	BeforeStrictUpdateCleanup(context.Context, *gorm1.DB) (*gorm1.DB, error)
-}
 type IntPointORMWithBeforeStrictUpdateSave interface {
 	BeforeStrictUpdateSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
@@ -440,7 +432,13 @@ func DefaultPatchIntPoint(ctx context.Context, in *IntPoint, updateMask *field_m
 			return nil, err
 		}
 	}
-	pbReadRes, err := DefaultReadIntPoint(ctx, &IntPoint{Id: in.GetId()}, db, nil)
+	pbReadRes, err := DefaultReadIntPoint(ctx, &IntPoint{Id: in.GetId()}, db,
+		&query1.FieldSelection{
+			Fields: map[string]*query1.Field{
+				"_unassoc": nil,
+			},
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -578,7 +576,7 @@ func DefaultCreateSomething(ctx context.Context, in *Something, db *gorm1.DB) (*
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(SomethingORMWithAfterCreateWithContext); ok {
@@ -683,7 +681,7 @@ func DefaultCreateCircle(ctx context.Context, in *Circle, db *gorm1.DB) (*Circle
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(CircleORMWithAfterCreateWithContext); ok {

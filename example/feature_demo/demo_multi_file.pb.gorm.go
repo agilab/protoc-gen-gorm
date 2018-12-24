@@ -216,7 +216,7 @@ func DefaultCreateExternalChild(ctx context.Context, in *ExternalChild, db *gorm
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterCreateWithContext); ok {
@@ -366,17 +366,12 @@ func DefaultStrictUpdateExternalChild(ctx context.Context, in *ExternalChild, db
 	var count int64
 	lockedRow := &ExternalChildORM{}
 	count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("id=?", ormObj.Id).First(lockedRow).RowsAffected
-	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeStrictUpdateCleanup); ok {
-		if db, err = hook.BeforeStrictUpdateCleanup(ctx, db); err != nil {
-			return nil, err
-		}
-	}
 	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeStrictUpdateSave); ok {
 		if db, err = hook.BeforeStrictUpdateSave(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Save(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterStrictUpdateSave); ok {
@@ -394,9 +389,6 @@ func DefaultStrictUpdateExternalChild(ctx context.Context, in *ExternalChild, db
 	return &pbResponse, err
 }
 
-type ExternalChildORMWithBeforeStrictUpdateCleanup interface {
-	BeforeStrictUpdateCleanup(context.Context, *gorm1.DB) (*gorm1.DB, error)
-}
 type ExternalChildORMWithBeforeStrictUpdateSave interface {
 	BeforeStrictUpdateSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
@@ -546,7 +538,7 @@ func DefaultCreateBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB) (*Bl
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterCreateWithContext); ok {
@@ -696,17 +688,12 @@ func DefaultStrictUpdateBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB
 	var count int64
 	lockedRow := &BlogPostORM{}
 	count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("id=?", ormObj.Id).First(lockedRow).RowsAffected
-	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeStrictUpdateCleanup); ok {
-		if db, err = hook.BeforeStrictUpdateCleanup(ctx, db); err != nil {
-			return nil, err
-		}
-	}
 	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeStrictUpdateSave); ok {
 		if db, err = hook.BeforeStrictUpdateSave(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Save(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterStrictUpdateSave); ok {
@@ -724,9 +711,6 @@ func DefaultStrictUpdateBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB
 	return &pbResponse, err
 }
 
-type BlogPostORMWithBeforeStrictUpdateCleanup interface {
-	BeforeStrictUpdateCleanup(context.Context, *gorm1.DB) (*gorm1.DB, error)
-}
 type BlogPostORMWithBeforeStrictUpdateSave interface {
 	BeforeStrictUpdateSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }

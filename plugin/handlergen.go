@@ -79,7 +79,7 @@ func (p *OrmPlugin) generateCreateHandler(message *generator.Descriptor) {
 	p.P(`return nil, err`)
 	p.P(`}`)
 	p.generateBeforeHookCall(orm, "CreateWithContext")
-	p.P(`if err = db.Create(&ormObj).Error; err != nil {`)
+	p.P(`if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {`)
 	p.P(`return nil, err`)
 	p.P(`}`)
 	p.generateAfterHookCall(orm, "CreateWithContext")
@@ -332,7 +332,13 @@ func (p *OrmPlugin) generatePatchHandler(message *generator.Descriptor) {
 	p.P(`var err error`)
 	p.generateBeforePatchHookCall(ormable, "Read")
 	if p.readHasFieldSelection(ormable) {
-		p.P(`pbReadRes, err := DefaultRead`, typeName, `(ctx, &`, typeName, `{Id: in.GetId()}, db, nil)`)
+		p.P(`pbReadRes, err := DefaultRead`, typeName, `(ctx, &`, typeName, `{Id: in.GetId()}, db, 
+			&`, p.Import(queryImport), `.FieldSelection{
+				Fields: map[string]*`, p.Import(queryImport), `.Field{
+					"_unassoc": nil,
+				},
+			},
+		)`)
 	} else {
 		p.P(`pbReadRes, err := DefaultRead`, typeName, `(ctx, &`, typeName, `{Id: in.GetId()}, db)`)
 	}
@@ -695,10 +701,8 @@ func (p *OrmPlugin) generateStrictUpdateHandler(message *generator.Descriptor) {
 			p.P(`count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("`, column, `=?", ormObj.`, pkName, `).First(lockedRow).RowsAffected`)
 		}
 	}
-	p.generateBeforeHookCall(ormable, "StrictUpdateCleanup")
-	p.removeChildAssociations(message)
 	p.generateBeforeHookCall(ormable, "StrictUpdateSave")
-	p.P(`if err = db.Save(&ormObj).Error; err != nil {`)
+	p.P(`if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {`)
 	p.P(`return nil, err`)
 	p.P(`}`)
 	p.generateAfterHookCall(ormable, "StrictUpdateSave")
@@ -715,7 +719,6 @@ func (p *OrmPlugin) generateStrictUpdateHandler(message *generator.Descriptor) {
 
 	p.P(`return &pbResponse, err`)
 	p.P(`}`)
-	p.generateBeforeHookDef(ormable, "StrictUpdateCleanup")
 	p.generateBeforeHookDef(ormable, "StrictUpdateSave")
 	p.generateAfterHookDef(ormable, "StrictUpdateSave")
 }
@@ -723,59 +726,6 @@ func (p *OrmPlugin) generateStrictUpdateHandler(message *generator.Descriptor) {
 func (p *OrmPlugin) isFieldOrmable(message *generator.Descriptor, fieldName string) bool {
 	_, ok := p.getOrmable(p.TypeName(message)).Fields[fieldName]
 	return ok
-}
-
-func (p *OrmPlugin) removeChildAssociations(message *generator.Descriptor) {
-	ormable := p.getOrmable(p.TypeName(message))
-	for _, fieldName := range p.getSortedFieldNames(ormable.Fields) {
-		p.removeChildAssociationsByName(message, fieldName)
-	}
-}
-
-func (p *OrmPlugin) removeChildAssociationsByName(message *generator.Descriptor, fieldName string) {
-	ormable := p.getOrmable(p.TypeName(message))
-	field := ormable.Fields[fieldName]
-
-	if field == nil {
-		return
-	}
-
-	if field.GetHasMany() != nil || field.GetHasOne() != nil {
-		var assocKeyName, foreignKeyName string
-		switch {
-		case field.GetHasMany() != nil:
-			assocKeyName = field.GetHasMany().GetAssociationForeignkey()
-			foreignKeyName = field.GetHasMany().GetForeignkey()
-		case field.GetHasOne() != nil:
-			assocKeyName = field.GetHasOne().GetAssociationForeignkey()
-			foreignKeyName = field.GetHasOne().GetForeignkey()
-		}
-		assocKeyType := ormable.Fields[assocKeyName].Type
-		assocOrmable := p.getOrmable(field.Type)
-		foreignKeyType := assocOrmable.Fields[foreignKeyName].Type
-		p.P(`filter`, fieldName, ` := `, strings.Trim(field.Type, "[]*"), `{}`)
-		zeroValue := p.guessZeroValue(assocKeyType)
-		if strings.Contains(assocKeyType, "*") {
-			p.P(`if ormObj.`, assocKeyName, ` == nil || *ormObj.`, assocKeyName, ` == `, zeroValue, `{`)
-		} else {
-			p.P(`if ormObj.`, assocKeyName, ` == `, zeroValue, `{`)
-		}
-		p.P(`return nil, errors.New("Can't do overwriting update with no `, assocKeyName, ` value for `, ormable.Name, `")`)
-		p.P(`}`)
-		filterDesc := "filter" + fieldName + "." + foreignKeyName
-		ormDesc := "ormObj." + assocKeyName
-		if strings.HasPrefix(foreignKeyType, "*") {
-			p.P(filterDesc, ` = new(`, strings.TrimPrefix(foreignKeyType, "*"), `)`)
-			filterDesc = "*" + filterDesc
-		}
-		if strings.HasPrefix(assocKeyType, "*") {
-			ormDesc = "*" + ormDesc
-		}
-		p.P(filterDesc, " = ", ormDesc)
-		p.P(`if err = db.Where(filter`, fieldName, `).Delete(`, strings.Trim(field.Type, "[]*"), `{}).Error; err != nil {`)
-		p.P(`return nil, err`)
-		p.P(`}`)
-	}
 }
 
 // guessZeroValue of the input type, so that we can check if a (key) value is set or not

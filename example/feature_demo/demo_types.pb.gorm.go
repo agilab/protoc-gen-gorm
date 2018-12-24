@@ -864,7 +864,7 @@ func DefaultCreateTestTypes(ctx context.Context, in *TestTypes, db *gorm1.DB) (*
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(TestTypesORMWithAfterCreateWithContext); ok {
@@ -1005,7 +1005,7 @@ func DefaultCreateTypeWithID(ctx context.Context, in *TypeWithID, db *gorm1.DB) 
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithAfterCreateWithContext); ok {
@@ -1155,35 +1155,12 @@ func DefaultStrictUpdateTypeWithID(ctx context.Context, in *TypeWithID, db *gorm
 	var count int64
 	lockedRow := &TypeWithIDORM{}
 	count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("id=?", ormObj.Id).First(lockedRow).RowsAffected
-	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithBeforeStrictUpdateCleanup); ok {
-		if db, err = hook.BeforeStrictUpdateCleanup(ctx, db); err != nil {
-			return nil, err
-		}
-	}
-	filterANestedObject := TestTypesORM{}
-	if ormObj.Id == 0 {
-		return nil, errors.New("Can't do overwriting update with no Id value for TypeWithIDORM")
-	}
-	filterANestedObject.ANestedObjectTypeWithIDId = new(uint32)
-	*filterANestedObject.ANestedObjectTypeWithIDId = ormObj.Id
-	if err = db.Where(filterANestedObject).Delete(TestTypesORM{}).Error; err != nil {
-		return nil, err
-	}
-	filterThings := TestTypesORM{}
-	if ormObj.Id == 0 {
-		return nil, errors.New("Can't do overwriting update with no Id value for TypeWithIDORM")
-	}
-	filterThings.ThingsTypeWithIDId = new(uint32)
-	*filterThings.ThingsTypeWithIDId = ormObj.Id
-	if err = db.Where(filterThings).Delete(TestTypesORM{}).Error; err != nil {
-		return nil, err
-	}
 	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithBeforeStrictUpdateSave); ok {
 		if db, err = hook.BeforeStrictUpdateSave(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Save(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(TypeWithIDORMWithAfterStrictUpdateSave); ok {
@@ -1201,9 +1178,6 @@ func DefaultStrictUpdateTypeWithID(ctx context.Context, in *TypeWithID, db *gorm
 	return &pbResponse, err
 }
 
-type TypeWithIDORMWithBeforeStrictUpdateCleanup interface {
-	BeforeStrictUpdateCleanup(context.Context, *gorm1.DB) (*gorm1.DB, error)
-}
 type TypeWithIDORMWithBeforeStrictUpdateSave interface {
 	BeforeStrictUpdateSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
@@ -1467,7 +1441,7 @@ func DefaultCreateMultiaccountTypeWithID(ctx context.Context, in *MultiaccountTy
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithAfterCreateWithContext); ok {
@@ -1626,17 +1600,12 @@ func DefaultStrictUpdateMultiaccountTypeWithID(ctx context.Context, in *Multiacc
 	var count int64
 	lockedRow := &MultiaccountTypeWithIDORM{}
 	count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("id=?", ormObj.Id).First(lockedRow).RowsAffected
-	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithBeforeStrictUpdateCleanup); ok {
-		if db, err = hook.BeforeStrictUpdateCleanup(ctx, db); err != nil {
-			return nil, err
-		}
-	}
 	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithBeforeStrictUpdateSave); ok {
 		if db, err = hook.BeforeStrictUpdateSave(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Save(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithIDORMWithAfterStrictUpdateSave); ok {
@@ -1654,9 +1623,6 @@ func DefaultStrictUpdateMultiaccountTypeWithID(ctx context.Context, in *Multiacc
 	return &pbResponse, err
 }
 
-type MultiaccountTypeWithIDORMWithBeforeStrictUpdateCleanup interface {
-	BeforeStrictUpdateCleanup(context.Context, *gorm1.DB) (*gorm1.DB, error)
-}
 type MultiaccountTypeWithIDORMWithBeforeStrictUpdateSave interface {
 	BeforeStrictUpdateSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
@@ -1810,7 +1776,7 @@ func DefaultCreateMultiaccountTypeWithoutID(ctx context.Context, in *Multiaccoun
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(MultiaccountTypeWithoutIDORMWithAfterCreateWithContext); ok {
@@ -1915,7 +1881,7 @@ func DefaultCreatePrimaryUUIDType(ctx context.Context, in *PrimaryUUIDType, db *
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithAfterCreateWithContext); ok {
@@ -2065,26 +2031,12 @@ func DefaultStrictUpdatePrimaryUUIDType(ctx context.Context, in *PrimaryUUIDType
 	var count int64
 	lockedRow := &PrimaryUUIDTypeORM{}
 	count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("id=?", ormObj.Id).First(lockedRow).RowsAffected
-	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithBeforeStrictUpdateCleanup); ok {
-		if db, err = hook.BeforeStrictUpdateCleanup(ctx, db); err != nil {
-			return nil, err
-		}
-	}
-	filterChild := ExternalChildORM{}
-	if ormObj.Id == nil || *ormObj.Id == go_uuid1.Nil {
-		return nil, errors.New("Can't do overwriting update with no Id value for PrimaryUUIDTypeORM")
-	}
-	filterChild.PrimaryUUIDTypeId = new(go_uuid1.UUID)
-	*filterChild.PrimaryUUIDTypeId = *ormObj.Id
-	if err = db.Where(filterChild).Delete(ExternalChildORM{}).Error; err != nil {
-		return nil, err
-	}
 	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithBeforeStrictUpdateSave); ok {
 		if db, err = hook.BeforeStrictUpdateSave(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Save(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(PrimaryUUIDTypeORMWithAfterStrictUpdateSave); ok {
@@ -2102,9 +2054,6 @@ func DefaultStrictUpdatePrimaryUUIDType(ctx context.Context, in *PrimaryUUIDType
 	return &pbResponse, err
 }
 
-type PrimaryUUIDTypeORMWithBeforeStrictUpdateCleanup interface {
-	BeforeStrictUpdateCleanup(context.Context, *gorm1.DB) (*gorm1.DB, error)
-}
 type PrimaryUUIDTypeORMWithBeforeStrictUpdateSave interface {
 	BeforeStrictUpdateSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
@@ -2276,7 +2225,7 @@ func DefaultCreatePrimaryStringType(ctx context.Context, in *PrimaryStringType, 
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithAfterCreateWithContext); ok {
@@ -2426,26 +2375,12 @@ func DefaultStrictUpdatePrimaryStringType(ctx context.Context, in *PrimaryString
 	var count int64
 	lockedRow := &PrimaryStringTypeORM{}
 	count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("id=?", ormObj.Id).First(lockedRow).RowsAffected
-	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithBeforeStrictUpdateCleanup); ok {
-		if db, err = hook.BeforeStrictUpdateCleanup(ctx, db); err != nil {
-			return nil, err
-		}
-	}
-	filterChild := ExternalChildORM{}
-	if ormObj.Id == "" {
-		return nil, errors.New("Can't do overwriting update with no Id value for PrimaryStringTypeORM")
-	}
-	filterChild.PrimaryStringTypeId = new(string)
-	*filterChild.PrimaryStringTypeId = ormObj.Id
-	if err = db.Where(filterChild).Delete(ExternalChildORM{}).Error; err != nil {
-		return nil, err
-	}
 	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithBeforeStrictUpdateSave); ok {
 		if db, err = hook.BeforeStrictUpdateSave(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Save(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(PrimaryStringTypeORMWithAfterStrictUpdateSave); ok {
@@ -2463,9 +2398,6 @@ func DefaultStrictUpdatePrimaryStringType(ctx context.Context, in *PrimaryString
 	return &pbResponse, err
 }
 
-type PrimaryStringTypeORMWithBeforeStrictUpdateCleanup interface {
-	BeforeStrictUpdateCleanup(context.Context, *gorm1.DB) (*gorm1.DB, error)
-}
 type PrimaryStringTypeORMWithBeforeStrictUpdateSave interface {
 	BeforeStrictUpdateSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
@@ -2637,7 +2569,7 @@ func DefaultCreateTestTag(ctx context.Context, in *TestTag, db *gorm1.DB) (*Test
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(TestTagORMWithAfterCreateWithContext); ok {
@@ -2787,26 +2719,12 @@ func DefaultStrictUpdateTestTag(ctx context.Context, in *TestTag, db *gorm1.DB) 
 	var count int64
 	lockedRow := &TestTagORM{}
 	count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("id=?", ormObj.Id).First(lockedRow).RowsAffected
-	if hook, ok := interface{}(&ormObj).(TestTagORMWithBeforeStrictUpdateCleanup); ok {
-		if db, err = hook.BeforeStrictUpdateCleanup(ctx, db); err != nil {
-			return nil, err
-		}
-	}
-	filterTestTagAssoc := TestTagAssociationORM{}
-	if ormObj.Id == "" {
-		return nil, errors.New("Can't do overwriting update with no Id value for TestTagORM")
-	}
-	filterTestTagAssoc.TestTagId = new(string)
-	*filterTestTagAssoc.TestTagId = ormObj.Id
-	if err = db.Where(filterTestTagAssoc).Delete(TestTagAssociationORM{}).Error; err != nil {
-		return nil, err
-	}
 	if hook, ok := interface{}(&ormObj).(TestTagORMWithBeforeStrictUpdateSave); ok {
 		if db, err = hook.BeforeStrictUpdateSave(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Save(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(TestTagORMWithAfterStrictUpdateSave); ok {
@@ -2824,9 +2742,6 @@ func DefaultStrictUpdateTestTag(ctx context.Context, in *TestTag, db *gorm1.DB) 
 	return &pbResponse, err
 }
 
-type TestTagORMWithBeforeStrictUpdateCleanup interface {
-	BeforeStrictUpdateCleanup(context.Context, *gorm1.DB) (*gorm1.DB, error)
-}
 type TestTagORMWithBeforeStrictUpdateSave interface {
 	BeforeStrictUpdateSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
@@ -2998,7 +2913,7 @@ func DefaultCreateTestTagAssociation(ctx context.Context, in *TestTagAssociation
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(TestTagAssociationORMWithAfterCreateWithContext); ok {
@@ -3103,7 +3018,7 @@ func DefaultCreatePrimaryIncluded(ctx context.Context, in *PrimaryIncluded, db *
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(PrimaryIncludedORMWithAfterCreateWithContext); ok {
