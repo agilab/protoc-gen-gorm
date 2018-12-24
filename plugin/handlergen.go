@@ -21,7 +21,6 @@ func (p *OrmPlugin) generateDefaultHandlers(file *generator.FileDescriptor) {
 				p.generateDeleteHandler(message)
 				p.generateDeleteSetHandler(message)
 				p.generateStrictUpdateHandler(message)
-				p.generateReplaceHandler(message)
 				p.generatePatchHandler(message)
 			}
 			p.generateApplyFieldMask(message)
@@ -79,16 +78,16 @@ func (p *OrmPlugin) generateCreateHandler(message *generator.Descriptor) {
 	p.P(`if err != nil {`)
 	p.P(`return nil, err`)
 	p.P(`}`)
-	p.generateBeforeHookCall(orm, "CreateORM")
+	p.generateBeforeHookCall(orm, "Create")
 	p.P(`if err = db.Create(&ormObj).Error; err != nil {`)
 	p.P(`return nil, err`)
 	p.P(`}`)
-	p.generateAfterHookCall(orm, "CreateORM")
+	p.generateAfterHookCall(orm, "Create")
 	p.P(`pbResponse, err := ormObj.ToPB(ctx)`)
 	p.P(`return &pbResponse, err`)
 	p.P(`}`)
-	p.generateBeforeHookDef(orm, "CreateORM")
-	p.generateAfterHookDef(orm, "CreateORM")
+	p.generateBeforeHookDef(orm, "Create")
+	p.generateAfterHookDef(orm, "Create")
 }
 
 func (p *OrmPlugin) generateReadHandler(message *generator.Descriptor) {
@@ -199,7 +198,7 @@ func (p *OrmPlugin) generateApplyFieldMask(message *generator.Descriptor) {
 	p.P(`// DefaultApplyFieldMask`, typeName, ` patches an pbObject with patcher according to a field mask.`)
 	p.P(`func DefaultApplyFieldMask`, typeName, `(ctx context.Context, patchee *`,
 		typeName, `, patcher *`, typeName, `, updateMask *`, p.Import(fmImport),
-		`.FieldMask, prefix string, db *`, p.Import(gormImport), `.DB, keyOfDeniedFields string) (*`, typeName, `, error) {`)
+		`.FieldMask, prefix string, db *`, p.Import(gormImport), `.DB) (*`, typeName, `, error) {`)
 
 	p.P(`if patcher == nil {`)
 	p.P(`return nil, nil`)
@@ -207,21 +206,6 @@ func (p *OrmPlugin) generateApplyFieldMask(message *generator.Descriptor) {
 	p.P(`return nil, errors.New("Patchee inputs to DefaultApplyFieldMask`,
 		typeName, ` must be non-nil")`)
 	p.P(`}`)
-
-	p.P(`ignoreFields := map[string]bool{}`)
-	p.P(`if keyOfDeniedFields != "" {`)
-	p.P(`if hook, ok := interface{}(patchee).(interface {`)
-	p.P(`ValidateDeniedFields() map[string][]string`)
-	p.P(`}); ok {`)
-	p.P(`deniedFields := hook.ValidateDeniedFields()[keyOfDeniedFields]`)
-	p.P(`if len(deniedFields) > 0 {`)
-	p.P(`for _, f := range deniedFields {`)
-	p.P(`ignoreFields[f] = true`)
-	p.P(`}`)
-	p.P(`}`)
-	p.P(`}`)
-	p.P(`}`)
-
 	p.P(`var err error`)
 	hasNested := false
 	for _, field := range message.GetField() {
@@ -244,11 +228,6 @@ func (p *OrmPlugin) generateApplyFieldMask(message *generator.Descriptor) {
 		//  for ormable message, do recursive patching
 		if field.IsMessage() && p.isOrmable(fieldType) && !field.IsRepeated() {
 			p.P(`if strings.HasPrefix(f, prefix+"`, ccName, `.") && !updated`, ccName, ` {`)
-
-			p.P(`if ignoreFields["`, ccName, `"] {`)
-			p.P(`continue`)
-			p.P(`}`)
-
 			p.P(`updated`, ccName, ` = true`)
 			p.P(`if patcher.`, ccName, ` == nil {`)
 			p.P(`patchee.`, ccName, ` = nil`)
@@ -260,11 +239,11 @@ func (p *OrmPlugin) generateApplyFieldMask(message *generator.Descriptor) {
 			if s := strings.Split(fieldType, "."); len(s) == 2 {
 				p.P(`if o, err := `, strings.TrimLeft(s[0], "*"), `.DefaultApplyFieldMask`, s[1], `(ctx, patchee.`, ccName,
 					`, patcher.`, ccName, `, &`, p.Import(fmImport),
-					`.FieldMask{Paths:updateMask.Paths[i:]}, prefix+"`, ccName, `.", db, keyOfDeniedFields); err != nil {`)
+					`.FieldMask{Paths:updateMask.Paths[i:]}, prefix+"`, ccName, `.", db); err != nil {`)
 			} else {
 				p.P(`if o, err := DefaultApplyFieldMask`, strings.TrimPrefix(fieldType, "*"), `(ctx, patchee.`, ccName,
 					`, patcher.`, ccName, `, &`, p.Import(fmImport),
-					`.FieldMask{Paths:updateMask.Paths[i:]}, prefix+"`, ccName, `.", db, keyOfDeniedFields); err != nil {`)
+					`.FieldMask{Paths:updateMask.Paths[i:]}, prefix+"`, ccName, `.", db); err != nil {`)
 			}
 			p.P(`return nil, err`)
 			p.P(`} else {`)
@@ -273,22 +252,12 @@ func (p *OrmPlugin) generateApplyFieldMask(message *generator.Descriptor) {
 			p.P(`continue`)
 			p.P(`}`)
 			p.P(`if f == prefix+"`, ccName, `" {`)
-
-			p.P(`if ignoreFields["`, ccName, `"] {`)
-			p.P(`continue`)
-			p.P(`}`)
-
 			p.P(`updated`, ccName, ` = true`)
 			p.P(`patchee.`, ccName, ` = patcher.`, ccName)
 			p.P(`continue`)
 			p.P(`}`)
 		} else if field.IsMessage() && !isSpecialType(fieldType) && !field.IsRepeated() {
 			p.P(`if strings.HasPrefix(f, prefix+"`, ccName, `.") && !updated`, ccName, ` {`)
-
-			p.P(`if ignoreFields["`, ccName, `"] {`)
-			p.P(`continue`)
-			p.P(`}`)
-
 			p.P(`if patcher.`, ccName, ` == nil {`)
 			p.P(`patchee.`, ccName, ` = nil`)
 			p.P(`continue`)
@@ -307,22 +276,12 @@ func (p *OrmPlugin) generateApplyFieldMask(message *generator.Descriptor) {
 			p.P(`}`)
 			p.P(`}`)
 			p.P(`if f == prefix+"`, ccName, `" {`)
-
-			p.P(`if ignoreFields["`, ccName, `"] {`)
-			p.P(`continue`)
-			p.P(`}`)
-
 			p.P(`updated`, ccName, ` = true`)
 			p.P(`patchee.`, ccName, ` = patcher.`, ccName)
 			p.P(`continue`)
 			p.P(`}`)
 		} else {
 			p.P(`if f == prefix+"`, ccName, `" {`)
-
-			p.P(`if ignoreFields["`, ccName, `"] {`)
-			p.P(`continue`)
-			p.P(`}`)
-
 			p.P(`patchee.`, ccName, ` = patcher.`, ccName)
 			p.P(`continue`)
 			p.P(`}`)
@@ -345,79 +304,6 @@ func (p *OrmPlugin) hasIDField(message *generator.Descriptor) bool {
 	}
 
 	return false
-}
-
-func (p *OrmPlugin) generateReplaceHandler(message *generator.Descriptor) {
-	var isMultiAccount bool
-
-	typeName := p.TypeName(message)
-	ormable := p.getOrmable(typeName)
-
-	if getMessageOptions(message).GetMultiAccount() {
-		isMultiAccount = true
-	}
-
-	if isMultiAccount && !p.hasIDField(message) {
-		p.P(fmt.Sprintf("// Cannot autogen DefaultReplace%s: this is a multi-account table without an \"id\" field in the message.\n", typeName))
-		return
-	}
-
-	p.P(`// DefaultReplace`, typeName, ` executes a basic gorm update call with replace behavior`)
-	p.P(`func DefaultReplace`, typeName, `(ctx context.Context, in *`, typeName, `, db *`, p.Import(gormImport), `.DB) (*`, typeName, `, error) {`)
-	p.P(`	if in == nil {`)
-	p.P(`		return nil, errors.New("Nil argument to DefaultReplace`, typeName, `")`)
-	p.P(`	}`)
-	p.P(``)
-	p.P(`	var err error`)
-	p.P(``)
-	p.P(`	if hook, ok := interface{}(in).(interface {`)
-	p.P(`		ValidateDeniedFields() map[string][]string`)
-	p.P(`	}); ok {`)
-	p.P(`		ignoreFields := hook.ValidateDeniedFields()["PUT"]`)
-	p.P(`		if len(ignoreFields) > 0 {`)
-	p.P(`			if hook, ok := interface{}(in).(interface {`)
-	p.P(`				BeforeReplaceRead(context.Context, *`, p.Import(gormImport), `.DB) (*`, p.Import(gormImport), `.DB, error)`)
-	p.P(`			}); ok {`)
-	p.P(`				if db, err = hook.BeforeReplaceRead(ctx, db); err != nil {`)
-	p.P(`					return nil, err`)
-	p.P(`				}`)
-	p.P(`			}`)
-	if p.readHasFieldSelection(ormable) {
-		p.P(`		pbReadRes, err := DefaultRead`, typeName, `(ctx, &`, typeName, `{Id: in.GetId()}, db, nil)`)
-	} else {
-		p.P(`		pbReadRes, err := DefaultRead`, typeName, `(ctx, &`, typeName, `{Id: in.GetId()}, db)`)
-	}
-	p.P(`			if err != nil {`)
-	p.P(`				return nil, err`)
-	p.P(`			}`)
-	p.P()
-	p.P(`			updateMask := &`, p.Import(fmImport), `.FieldMask{Paths: ignoreFields}`)
-	p.P(`			if _, err := DefaultApplyFieldMask`, typeName, `(ctx, in, pbReadRes, updateMask, "", db, ""); err != nil {`)
-	p.P(`				return nil, err`)
-	p.P(`			}`)
-	p.P(`		}`)
-	p.P(`	}`)
-	p.P()
-	p.P(`	if hook, ok := interface{}(in).(interface {`)
-	p.P(`		BeforeReplaceSave(context.Context, *`, p.Import(gormImport), `.DB) (*`, p.Import(gormImport), `.DB, error)`)
-	p.P(`	}); ok {`)
-	p.P(`		if db, err = hook.BeforeReplaceSave(ctx, db); err != nil {`)
-	p.P(`			return nil, err`)
-	p.P(`		}`)
-	p.P(`	}`)
-	p.P(`	pbResponse, err := DefaultStrictUpdate`, typeName, `(ctx, in, db)`)
-	p.P(`	if err != nil {`)
-	p.P(`		return nil, err`)
-	p.P(`	}`)
-	p.P(`	if hook, ok := interface{}(in).(interface {`)
-	p.P(`		AfterReplaceSave(context.Context, *`, typeName, `, *`, p.Import(gormImport), `.DB) error`)
-	p.P(`	}); ok {`)
-	p.P(`		if err = hook.AfterReplaceSave(ctx, in, db); err != nil {`)
-	p.P(`			return nil, err`)
-	p.P(`		}`)
-	p.P(`	}`)
-	p.P(`	return pbResponse, nil`)
-	p.P(`}`)
 }
 
 func (p *OrmPlugin) generatePatchHandler(message *generator.Descriptor) {
@@ -458,7 +344,7 @@ func (p *OrmPlugin) generatePatchHandler(message *generator.Descriptor) {
 	p.P(`pbObj = *pbReadRes`)
 
 	p.generateBeforePatchHookCall(ormable, "ApplyFieldMask")
-	p.P(`if _, err := DefaultApplyFieldMask`, typeName, `(ctx, &pbObj, in, updateMask, "", db, "PATCH"); err != nil {`)
+	p.P(`if _, err := DefaultApplyFieldMask`, typeName, `(ctx, &pbObj, in, updateMask, "", db); err != nil {`)
 	p.P(`return nil, err`)
 	p.P(`}`)
 
@@ -536,21 +422,21 @@ func (p *OrmPlugin) generateDeleteHandler(message *generator.Descriptor) {
 	p.generateAfterDeleteHookCall(ormable)
 	p.P(`return err`)
 	p.P(`}`)
-	p.generateBeforeHookDef(ormable, "DeleteORM")
-	p.generateAfterHookDef(ormable, "DeleteORM")
+	p.generateBeforeHookDef(ormable, "Delete")
+	p.generateAfterHookDef(ormable, "Delete")
 }
 
 func (p *OrmPlugin) generateBeforeDeleteHookCall(orm *OrmableType) {
-	p.P(`if hook, ok := interface{}(&ormObj).(`, orm.Name, `WithBeforeDeleteORM); ok {`)
-	p.P(`if db, err = hook.BeforeDeleteORM(ctx, db); err != nil {`)
+	p.P(`if hook, ok := interface{}(&ormObj).(`, orm.Name, `WithBeforeDelete); ok {`)
+	p.P(`if db, err = hook.BeforeDelete(ctx, db); err != nil {`)
 	p.P(`return err`)
 	p.P(`}`)
 	p.P(`}`)
 }
 
 func (p *OrmPlugin) generateAfterDeleteHookCall(orm *OrmableType) {
-	p.P(`if hook, ok := interface{}(&ormObj).(`, orm.Name, `WithAfterDeleteORM); ok {`)
-	p.P(`err = hook.AfterDeleteORM(ctx, db)`)
+	p.P(`if hook, ok := interface{}(&ormObj).(`, orm.Name, `WithAfterDelete); ok {`)
+	p.P(`err = hook.AfterDelete(ctx, db)`)
 	p.P(`}`)
 }
 

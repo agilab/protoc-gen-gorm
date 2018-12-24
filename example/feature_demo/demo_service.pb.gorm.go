@@ -235,16 +235,16 @@ func DefaultCreateIntPoint(ctx context.Context, in *IntPoint, db *gorm1.DB) (*In
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(IntPointORMWithBeforeCreateORM); ok {
-		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(IntPointORMWithBeforeCreate); ok {
+		if db, err = hook.BeforeCreate(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(IntPointORMWithAfterCreateORM); ok {
-		if err = hook.AfterCreateORM(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(IntPointORMWithAfterCreate); ok {
+		if err = hook.AfterCreate(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -252,11 +252,11 @@ func DefaultCreateIntPoint(ctx context.Context, in *IntPoint, db *gorm1.DB) (*In
 	return &pbResponse, err
 }
 
-type IntPointORMWithBeforeCreateORM interface {
-	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type IntPointORMWithBeforeCreate interface {
+	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type IntPointORMWithAfterCreateORM interface {
-	AfterCreateORM(context.Context, *gorm1.DB) error
+type IntPointORMWithAfterCreate interface {
+	AfterCreate(context.Context, *gorm1.DB) error
 }
 
 // DefaultReadIntPoint executes a basic gorm read call
@@ -318,8 +318,8 @@ func DefaultDeleteIntPoint(ctx context.Context, in *IntPoint, db *gorm1.DB) erro
 	if ormObj.Id == 0 {
 		return errors.New("A non-zero ID value is required for a delete call")
 	}
-	if hook, ok := interface{}(&ormObj).(IntPointORMWithBeforeDeleteORM); ok {
-		if db, err = hook.BeforeDeleteORM(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(IntPointORMWithBeforeDelete); ok {
+		if db, err = hook.BeforeDelete(ctx, db); err != nil {
 			return err
 		}
 	}
@@ -327,17 +327,17 @@ func DefaultDeleteIntPoint(ctx context.Context, in *IntPoint, db *gorm1.DB) erro
 	if err != nil {
 		return err
 	}
-	if hook, ok := interface{}(&ormObj).(IntPointORMWithAfterDeleteORM); ok {
-		err = hook.AfterDeleteORM(ctx, db)
+	if hook, ok := interface{}(&ormObj).(IntPointORMWithAfterDelete); ok {
+		err = hook.AfterDelete(ctx, db)
 	}
 	return err
 }
 
-type IntPointORMWithBeforeDeleteORM interface {
-	BeforeDeleteORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type IntPointORMWithBeforeDelete interface {
+	BeforeDelete(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type IntPointORMWithAfterDeleteORM interface {
-	AfterDeleteORM(context.Context, *gorm1.DB) error
+type IntPointORMWithAfterDelete interface {
+	AfterDelete(context.Context, *gorm1.DB) error
 }
 
 func DefaultDeleteIntPointSet(ctx context.Context, in []*IntPoint, db *gorm1.DB) error {
@@ -428,59 +428,6 @@ type IntPointORMWithAfterStrictUpdateSave interface {
 	AfterStrictUpdateSave(context.Context, *gorm1.DB) error
 }
 
-// DefaultReplaceIntPoint executes a basic gorm update call with replace behavior
-func DefaultReplaceIntPoint(ctx context.Context, in *IntPoint, db *gorm1.DB) (*IntPoint, error) {
-	if in == nil {
-		return nil, errors.New("Nil argument to DefaultReplaceIntPoint")
-	}
-
-	var err error
-
-	if hook, ok := interface{}(in).(interface {
-		ValidateDeniedFields() map[string][]string
-	}); ok {
-		ignoreFields := hook.ValidateDeniedFields()["PUT"]
-		if len(ignoreFields) > 0 {
-			if hook, ok := interface{}(in).(interface {
-				BeforeReplaceRead(context.Context, *gorm1.DB) (*gorm1.DB, error)
-			}); ok {
-				if db, err = hook.BeforeReplaceRead(ctx, db); err != nil {
-					return nil, err
-				}
-			}
-			pbReadRes, err := DefaultReadIntPoint(ctx, &IntPoint{Id: in.GetId()}, db, nil)
-			if err != nil {
-				return nil, err
-			}
-
-			updateMask := &field_mask1.FieldMask{Paths: ignoreFields}
-			if _, err := DefaultApplyFieldMaskIntPoint(ctx, in, pbReadRes, updateMask, "", db, ""); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	if hook, ok := interface{}(in).(interface {
-		BeforeReplaceSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
-	}); ok {
-		if db, err = hook.BeforeReplaceSave(ctx, db); err != nil {
-			return nil, err
-		}
-	}
-	pbResponse, err := DefaultStrictUpdateIntPoint(ctx, in, db)
-	if err != nil {
-		return nil, err
-	}
-	if hook, ok := interface{}(in).(interface {
-		AfterReplaceSave(context.Context, *IntPoint, *gorm1.DB) error
-	}); ok {
-		if err = hook.AfterReplaceSave(ctx, in, db); err != nil {
-			return nil, err
-		}
-	}
-	return pbResponse, nil
-}
-
 // DefaultPatchIntPoint executes a basic gorm update call with patch behavior
 func DefaultPatchIntPoint(ctx context.Context, in *IntPoint, updateMask *field_mask1.FieldMask, db *gorm1.DB) (*IntPoint, error) {
 	if in == nil {
@@ -503,7 +450,7 @@ func DefaultPatchIntPoint(ctx context.Context, in *IntPoint, updateMask *field_m
 			return nil, err
 		}
 	}
-	if _, err := DefaultApplyFieldMaskIntPoint(ctx, &pbObj, in, updateMask, "", db, "PATCH"); err != nil {
+	if _, err := DefaultApplyFieldMaskIntPoint(ctx, &pbObj, in, updateMask, "", db); err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&pbObj).(IntPointWithBeforePatchSave); ok {
@@ -537,45 +484,23 @@ type IntPointWithAfterPatchSave interface {
 }
 
 // DefaultApplyFieldMaskIntPoint patches an pbObject with patcher according to a field mask.
-func DefaultApplyFieldMaskIntPoint(ctx context.Context, patchee *IntPoint, patcher *IntPoint, updateMask *field_mask1.FieldMask, prefix string, db *gorm1.DB, keyOfDeniedFields string) (*IntPoint, error) {
+func DefaultApplyFieldMaskIntPoint(ctx context.Context, patchee *IntPoint, patcher *IntPoint, updateMask *field_mask1.FieldMask, prefix string, db *gorm1.DB) (*IntPoint, error) {
 	if patcher == nil {
 		return nil, nil
 	} else if patchee == nil {
 		return nil, errors.New("Patchee inputs to DefaultApplyFieldMaskIntPoint must be non-nil")
 	}
-	ignoreFields := map[string]bool{}
-	if keyOfDeniedFields != "" {
-		if hook, ok := interface{}(patchee).(interface {
-			ValidateDeniedFields() map[string][]string
-		}); ok {
-			deniedFields := hook.ValidateDeniedFields()[keyOfDeniedFields]
-			if len(deniedFields) > 0 {
-				for _, f := range deniedFields {
-					ignoreFields[f] = true
-				}
-			}
-		}
-	}
 	var err error
 	for _, f := range updateMask.Paths {
 		if f == prefix+"Id" {
-			if ignoreFields["Id"] {
-				continue
-			}
 			patchee.Id = patcher.Id
 			continue
 		}
 		if f == prefix+"X" {
-			if ignoreFields["X"] {
-				continue
-			}
 			patchee.X = patcher.X
 			continue
 		}
 		if f == prefix+"Y" {
-			if ignoreFields["Y"] {
-				continue
-			}
 			patchee.Y = patcher.Y
 			continue
 		}
@@ -648,16 +573,16 @@ func DefaultCreateSomething(ctx context.Context, in *Something, db *gorm1.DB) (*
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(SomethingORMWithBeforeCreateORM); ok {
-		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(SomethingORMWithBeforeCreate); ok {
+		if db, err = hook.BeforeCreate(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(SomethingORMWithAfterCreateORM); ok {
-		if err = hook.AfterCreateORM(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(SomethingORMWithAfterCreate); ok {
+		if err = hook.AfterCreate(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -665,39 +590,23 @@ func DefaultCreateSomething(ctx context.Context, in *Something, db *gorm1.DB) (*
 	return &pbResponse, err
 }
 
-type SomethingORMWithBeforeCreateORM interface {
-	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type SomethingORMWithBeforeCreate interface {
+	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type SomethingORMWithAfterCreateORM interface {
-	AfterCreateORM(context.Context, *gorm1.DB) error
+type SomethingORMWithAfterCreate interface {
+	AfterCreate(context.Context, *gorm1.DB) error
 }
 
 // DefaultApplyFieldMaskSomething patches an pbObject with patcher according to a field mask.
-func DefaultApplyFieldMaskSomething(ctx context.Context, patchee *Something, patcher *Something, updateMask *field_mask1.FieldMask, prefix string, db *gorm1.DB, keyOfDeniedFields string) (*Something, error) {
+func DefaultApplyFieldMaskSomething(ctx context.Context, patchee *Something, patcher *Something, updateMask *field_mask1.FieldMask, prefix string, db *gorm1.DB) (*Something, error) {
 	if patcher == nil {
 		return nil, nil
 	} else if patchee == nil {
 		return nil, errors.New("Patchee inputs to DefaultApplyFieldMaskSomething must be non-nil")
 	}
-	ignoreFields := map[string]bool{}
-	if keyOfDeniedFields != "" {
-		if hook, ok := interface{}(patchee).(interface {
-			ValidateDeniedFields() map[string][]string
-		}); ok {
-			deniedFields := hook.ValidateDeniedFields()[keyOfDeniedFields]
-			if len(deniedFields) > 0 {
-				for _, f := range deniedFields {
-					ignoreFields[f] = true
-				}
-			}
-		}
-	}
 	var err error
 	for _, f := range updateMask.Paths {
 		if f == prefix+"Field" {
-			if ignoreFields["Field"] {
-				continue
-			}
 			patchee.Field = patcher.Field
 			continue
 		}
@@ -769,16 +678,16 @@ func DefaultCreateCircle(ctx context.Context, in *Circle, db *gorm1.DB) (*Circle
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(CircleORMWithBeforeCreateORM); ok {
-		if db, err = hook.BeforeCreateORM(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(CircleORMWithBeforeCreate); ok {
+		if db, err = hook.BeforeCreate(ctx, db); err != nil {
 			return nil, err
 		}
 	}
 	if err = db.Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(CircleORMWithAfterCreateORM); ok {
-		if err = hook.AfterCreateORM(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(CircleORMWithAfterCreate); ok {
+		if err = hook.AfterCreate(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -786,39 +695,23 @@ func DefaultCreateCircle(ctx context.Context, in *Circle, db *gorm1.DB) (*Circle
 	return &pbResponse, err
 }
 
-type CircleORMWithBeforeCreateORM interface {
-	BeforeCreateORM(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type CircleORMWithBeforeCreate interface {
+	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type CircleORMWithAfterCreateORM interface {
-	AfterCreateORM(context.Context, *gorm1.DB) error
+type CircleORMWithAfterCreate interface {
+	AfterCreate(context.Context, *gorm1.DB) error
 }
 
 // DefaultApplyFieldMaskCircle patches an pbObject with patcher according to a field mask.
-func DefaultApplyFieldMaskCircle(ctx context.Context, patchee *Circle, patcher *Circle, updateMask *field_mask1.FieldMask, prefix string, db *gorm1.DB, keyOfDeniedFields string) (*Circle, error) {
+func DefaultApplyFieldMaskCircle(ctx context.Context, patchee *Circle, patcher *Circle, updateMask *field_mask1.FieldMask, prefix string, db *gorm1.DB) (*Circle, error) {
 	if patcher == nil {
 		return nil, nil
 	} else if patchee == nil {
 		return nil, errors.New("Patchee inputs to DefaultApplyFieldMaskCircle must be non-nil")
 	}
-	ignoreFields := map[string]bool{}
-	if keyOfDeniedFields != "" {
-		if hook, ok := interface{}(patchee).(interface {
-			ValidateDeniedFields() map[string][]string
-		}); ok {
-			deniedFields := hook.ValidateDeniedFields()[keyOfDeniedFields]
-			if len(deniedFields) > 0 {
-				for _, f := range deniedFields {
-					ignoreFields[f] = true
-				}
-			}
-		}
-	}
 	var err error
 	for _, f := range updateMask.Paths {
 		if f == prefix+"R" {
-			if ignoreFields["R"] {
-				continue
-			}
 			patchee.R = patcher.R
 			continue
 		}
@@ -966,7 +859,7 @@ func (m *IntPointServiceDefaultServer) Update(ctx context.Context, in *UpdateInt
 		}
 	}
 	if in.GetGerogeriGegege() == nil {
-		res, err = DefaultReplaceIntPoint(ctx, in.GetPayload(), db)
+		res, err = DefaultStrictUpdateIntPoint(ctx, in.GetPayload(), db)
 	} else {
 		res, err = DefaultPatchIntPoint(ctx, in.GetPayload(), in.GetGerogeriGegege(), db)
 	}
@@ -1196,7 +1089,7 @@ func (m *IntPointTxnDefaultServer) Update(ctx context.Context, in *UpdateIntPoin
 		}
 	}
 	if in.GetGerogeriGegege() == nil {
-		res, err = DefaultReplaceIntPoint(ctx, in.GetPayload(), db)
+		res, err = DefaultStrictUpdateIntPoint(ctx, in.GetPayload(), db)
 	} else {
 		res, err = DefaultPatchIntPoint(ctx, in.GetPayload(), in.GetGerogeriGegege(), db)
 	}
