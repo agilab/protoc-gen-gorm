@@ -1229,7 +1229,7 @@ func DefaultApplyFieldMaskUser(ctx context.Context, patchee *User, patcher *User
 }
 
 // DefaultListUser executes a gorm list call
-func DefaultListUser(ctx context.Context, db *gorm1.DB) ([]*User, error) {
+func DefaultListUser(ctx context.Context, db *gorm1.DB, totalCnt *int32) ([]*User, error) {
 	in := User{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -1244,19 +1244,26 @@ func DefaultListUser(ctx context.Context, db *gorm1.DB) ([]*User, error) {
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(UserORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	db = db.Order("id")
 	ormResponse := []UserORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(UserORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt); err != nil {
 			return nil, err
 		}
 	}
@@ -1278,7 +1285,7 @@ type UserORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type UserORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]UserORM) error
+	AfterListFind(context.Context, *gorm1.DB, *[]UserORM, *int32) error
 }
 
 // DefaultCreateEmail executes a basic gorm create call
@@ -1570,7 +1577,7 @@ func DefaultApplyFieldMaskEmail(ctx context.Context, patchee *Email, patcher *Em
 }
 
 // DefaultListEmail executes a gorm list call
-func DefaultListEmail(ctx context.Context, db *gorm1.DB) ([]*Email, error) {
+func DefaultListEmail(ctx context.Context, db *gorm1.DB, totalCnt *int32) ([]*Email, error) {
 	in := Email{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -1585,19 +1592,26 @@ func DefaultListEmail(ctx context.Context, db *gorm1.DB) ([]*Email, error) {
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(EmailORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	db = db.Order("id")
 	ormResponse := []EmailORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(EmailORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt); err != nil {
 			return nil, err
 		}
 	}
@@ -1619,7 +1633,7 @@ type EmailORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type EmailORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]EmailORM) error
+	AfterListFind(context.Context, *gorm1.DB, *[]EmailORM, *int32) error
 }
 
 // DefaultCreateAddress executes a basic gorm create call
@@ -1915,7 +1929,7 @@ func DefaultApplyFieldMaskAddress(ctx context.Context, patchee *Address, patcher
 }
 
 // DefaultListAddress executes a gorm list call
-func DefaultListAddress(ctx context.Context, db *gorm1.DB) ([]*Address, error) {
+func DefaultListAddress(ctx context.Context, db *gorm1.DB, totalCnt *int32) ([]*Address, error) {
 	in := Address{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -1930,19 +1944,26 @@ func DefaultListAddress(ctx context.Context, db *gorm1.DB) ([]*Address, error) {
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(AddressORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	db = db.Order("id")
 	ormResponse := []AddressORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(AddressORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt); err != nil {
 			return nil, err
 		}
 	}
@@ -1964,7 +1985,7 @@ type AddressORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type AddressORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]AddressORM) error
+	AfterListFind(context.Context, *gorm1.DB, *[]AddressORM, *int32) error
 }
 
 // DefaultCreateLanguage executes a basic gorm create call
@@ -2252,7 +2273,7 @@ func DefaultApplyFieldMaskLanguage(ctx context.Context, patchee *Language, patch
 }
 
 // DefaultListLanguage executes a gorm list call
-func DefaultListLanguage(ctx context.Context, db *gorm1.DB) ([]*Language, error) {
+func DefaultListLanguage(ctx context.Context, db *gorm1.DB, totalCnt *int32) ([]*Language, error) {
 	in := Language{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -2267,19 +2288,26 @@ func DefaultListLanguage(ctx context.Context, db *gorm1.DB) ([]*Language, error)
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(LanguageORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	db = db.Order("id")
 	ormResponse := []LanguageORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(LanguageORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt); err != nil {
 			return nil, err
 		}
 	}
@@ -2301,7 +2329,7 @@ type LanguageORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type LanguageORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]LanguageORM) error
+	AfterListFind(context.Context, *gorm1.DB, *[]LanguageORM, *int32) error
 }
 
 // DefaultCreateCreditCard executes a basic gorm create call
@@ -2593,7 +2621,7 @@ func DefaultApplyFieldMaskCreditCard(ctx context.Context, patchee *CreditCard, p
 }
 
 // DefaultListCreditCard executes a gorm list call
-func DefaultListCreditCard(ctx context.Context, db *gorm1.DB) ([]*CreditCard, error) {
+func DefaultListCreditCard(ctx context.Context, db *gorm1.DB, totalCnt *int32) ([]*CreditCard, error) {
 	in := CreditCard{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -2608,19 +2636,26 @@ func DefaultListCreditCard(ctx context.Context, db *gorm1.DB) ([]*CreditCard, er
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(CreditCardORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	db = db.Order("id")
 	ormResponse := []CreditCardORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(CreditCardORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt); err != nil {
 			return nil, err
 		}
 	}
@@ -2642,7 +2677,7 @@ type CreditCardORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type CreditCardORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]CreditCardORM) error
+	AfterListFind(context.Context, *gorm1.DB, *[]CreditCardORM, *int32) error
 }
 
 // DefaultCreateTask executes a basic gorm create call
@@ -2707,7 +2742,7 @@ func DefaultApplyFieldMaskTask(ctx context.Context, patchee *Task, patcher *Task
 }
 
 // DefaultListTask executes a gorm list call
-func DefaultListTask(ctx context.Context, db *gorm1.DB) ([]*Task, error) {
+func DefaultListTask(ctx context.Context, db *gorm1.DB, totalCnt *int32) ([]*Task, error) {
 	in := Task{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -2722,18 +2757,25 @@ func DefaultListTask(ctx context.Context, db *gorm1.DB) ([]*Task, error) {
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(TaskORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	ormResponse := []TaskORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(TaskORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt); err != nil {
 			return nil, err
 		}
 	}
@@ -2755,5 +2797,5 @@ type TaskORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type TaskORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]TaskORM) error
+	AfterListFind(context.Context, *gorm1.DB, *[]TaskORM, *int32) error
 }

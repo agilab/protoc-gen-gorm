@@ -472,7 +472,7 @@ func DefaultApplyFieldMaskExternalChild(ctx context.Context, patchee *ExternalCh
 }
 
 // DefaultListExternalChild executes a gorm list call
-func DefaultListExternalChild(ctx context.Context, db *gorm1.DB) ([]*ExternalChild, error) {
+func DefaultListExternalChild(ctx context.Context, db *gorm1.DB, totalCnt *int32) ([]*ExternalChild, error) {
 	in := ExternalChild{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -487,19 +487,26 @@ func DefaultListExternalChild(ctx context.Context, db *gorm1.DB) ([]*ExternalChi
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	db = db.Order("id")
 	ormResponse := []ExternalChildORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt); err != nil {
 			return nil, err
 		}
 	}
@@ -521,7 +528,7 @@ type ExternalChildORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type ExternalChildORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]ExternalChildORM) error
+	AfterListFind(context.Context, *gorm1.DB, *[]ExternalChildORM, *int32) error
 }
 
 // DefaultCreateBlogPost executes a basic gorm create call
@@ -802,7 +809,7 @@ func DefaultApplyFieldMaskBlogPost(ctx context.Context, patchee *BlogPost, patch
 }
 
 // DefaultListBlogPost executes a gorm list call
-func DefaultListBlogPost(ctx context.Context, db *gorm1.DB) ([]*BlogPost, error) {
+func DefaultListBlogPost(ctx context.Context, db *gorm1.DB, totalCnt *int32) ([]*BlogPost, error) {
 	in := BlogPost{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -817,19 +824,26 @@ func DefaultListBlogPost(ctx context.Context, db *gorm1.DB) ([]*BlogPost, error)
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	db = db.Order("id")
 	ormResponse := []BlogPostORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt); err != nil {
 			return nil, err
 		}
 	}
@@ -851,5 +865,5 @@ type BlogPostORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type BlogPostORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]BlogPostORM) error
+	AfterListFind(context.Context, *gorm1.DB, *[]BlogPostORM, *int32) error
 }

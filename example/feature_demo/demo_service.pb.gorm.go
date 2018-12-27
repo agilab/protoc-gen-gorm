@@ -510,7 +510,7 @@ func DefaultApplyFieldMaskIntPoint(ctx context.Context, patchee *IntPoint, patch
 }
 
 // DefaultListIntPoint executes a gorm list call
-func DefaultListIntPoint(ctx context.Context, db *gorm1.DB, f *query1.Filtering, s *query1.Sorting, p *query1.Pagination, fs *query1.FieldSelection) ([]*IntPoint, error) {
+func DefaultListIntPoint(ctx context.Context, db *gorm1.DB, totalCnt *int32, f *query1.Filtering, s *query1.Sorting, p *query1.Pagination, fs *query1.FieldSelection) ([]*IntPoint, error) {
 	in := IntPoint{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -521,23 +521,31 @@ func DefaultListIntPoint(ctx context.Context, db *gorm1.DB, f *query1.Filtering,
 			return nil, err
 		}
 	}
-	db, err = gorm2.ApplyCollectionOperators(ctx, db, &IntPointORM{}, &IntPoint{}, f, s, p, fs)
+	db, err = gorm2.ApplyCollectionOperators(ctx, db, &IntPointORM{}, &IntPoint{}, f, s, nil, fs)
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(IntPointORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db, f, s, p, fs); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	db = db.Order("id")
+	db = gorm2.ApplyPagination(ctx, db, p)
 	ormResponse := []IntPointORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(IntPointORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse, f, s, p, fs); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt, f, s, p, fs); err != nil {
 			return nil, err
 		}
 	}
@@ -559,7 +567,7 @@ type IntPointORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB, *query1.Filtering, *query1.Sorting, *query1.Pagination, *query1.FieldSelection) (*gorm1.DB, error)
 }
 type IntPointORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]IntPointORM, *query1.Filtering, *query1.Sorting, *query1.Pagination, *query1.FieldSelection) error
+	AfterListFind(context.Context, *gorm1.DB, *[]IntPointORM, *int32, *query1.Filtering, *query1.Sorting, *query1.Pagination, *query1.FieldSelection) error
 }
 
 // DefaultCreateSomething executes a basic gorm create call
@@ -616,7 +624,7 @@ func DefaultApplyFieldMaskSomething(ctx context.Context, patchee *Something, pat
 }
 
 // DefaultListSomething executes a gorm list call
-func DefaultListSomething(ctx context.Context, db *gorm1.DB) ([]*Something, error) {
+func DefaultListSomething(ctx context.Context, db *gorm1.DB, totalCnt *int32) ([]*Something, error) {
 	in := Something{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -631,18 +639,25 @@ func DefaultListSomething(ctx context.Context, db *gorm1.DB) ([]*Something, erro
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(SomethingORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	ormResponse := []SomethingORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(SomethingORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt); err != nil {
 			return nil, err
 		}
 	}
@@ -664,7 +679,7 @@ type SomethingORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type SomethingORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]SomethingORM) error
+	AfterListFind(context.Context, *gorm1.DB, *[]SomethingORM, *int32) error
 }
 
 // DefaultCreateCircle executes a basic gorm create call
@@ -721,7 +736,7 @@ func DefaultApplyFieldMaskCircle(ctx context.Context, patchee *Circle, patcher *
 }
 
 // DefaultListCircle executes a gorm list call
-func DefaultListCircle(ctx context.Context, db *gorm1.DB) ([]*Circle, error) {
+func DefaultListCircle(ctx context.Context, db *gorm1.DB, totalCnt *int32) ([]*Circle, error) {
 	in := Circle{}
 	ormObj, err := in.ToORM(ctx)
 	if err != nil {
@@ -736,18 +751,25 @@ func DefaultListCircle(ctx context.Context, db *gorm1.DB) ([]*Circle, error) {
 	if err != nil {
 		return nil, err
 	}
+	db = db.Where(&ormObj)
+
+	if totalCnt != nil {
+		if err := db.Model(&ormObj).Count(totalCnt).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if hook, ok := interface{}(&ormObj).(CircleORMWithBeforeListFind); ok {
 		if db, err = hook.BeforeListFind(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	db = db.Where(&ormObj)
 	ormResponse := []CircleORM{}
 	if err := db.Find(&ormResponse).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(CircleORMWithAfterListFind); ok {
-		if err = hook.AfterListFind(ctx, db, &ormResponse); err != nil {
+		if err = hook.AfterListFind(ctx, db, &ormResponse, totalCnt); err != nil {
 			return nil, err
 		}
 	}
@@ -769,7 +791,7 @@ type CircleORMWithBeforeListFind interface {
 	BeforeListFind(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type CircleORMWithAfterListFind interface {
-	AfterListFind(context.Context, *gorm1.DB, *[]CircleORM) error
+	AfterListFind(context.Context, *gorm1.DB, *[]CircleORM, *int32) error
 }
 type IntPointServiceDefaultServer struct {
 	DB *gorm1.DB
@@ -893,17 +915,17 @@ func (m *IntPointServiceDefaultServer) List(ctx context.Context, in *ListIntPoin
 			return nil, err
 		}
 	}
-	pagedRequest := false
+	var totalCnt *int32
 	if in.GetPaging().GetLimit() >= 1 {
 		in.Paging.Limit++
-		pagedRequest = true
+		totalCnt = new(int32)
 	}
-	res, err := DefaultListIntPoint(ctx, db, in.Filter, in.OrderBy, in.Paging, in.Fields)
+	res, err := DefaultListIntPoint(ctx, db, totalCnt, in.Filter, in.OrderBy, in.Paging, in.Fields)
 	if err != nil {
 		return nil, err
 	}
 	var resPaging *query1.PageInfo
-	if pagedRequest {
+	if totalCnt != nil {
 		var offset int32
 		var size int32 = int32(len(res))
 		if size == in.GetPaging().GetLimit() {
@@ -911,7 +933,7 @@ func (m *IntPointServiceDefaultServer) List(ctx context.Context, in *ListIntPoin
 			res = res[:size]
 			offset = in.GetPaging().GetOffset() + size
 		}
-		resPaging = &query1.PageInfo{Offset: offset}
+		resPaging = &query1.PageInfo{Offset: offset, Size: *totalCnt}
 	}
 	out := &ListIntPointResponse{Results: res, PageInfo: resPaging}
 	if custom, ok := interface{}(in).(IntPointServiceIntPointWithAfterList); ok {
@@ -1130,17 +1152,17 @@ func (m *IntPointTxnDefaultServer) List(ctx context.Context, in *ListIntPointReq
 			return nil, err
 		}
 	}
-	pagedRequest := false
+	var totalCnt *int32
 	if in.GetPaging().GetLimit() >= 1 {
 		in.Paging.Limit++
-		pagedRequest = true
+		totalCnt = new(int32)
 	}
-	res, err := DefaultListIntPoint(ctx, db, in.Filter, in.OrderBy, in.Paging, in.Fields)
+	res, err := DefaultListIntPoint(ctx, db, totalCnt, in.Filter, in.OrderBy, in.Paging, in.Fields)
 	if err != nil {
 		return nil, err
 	}
 	var resPaging *query1.PageInfo
-	if pagedRequest {
+	if totalCnt != nil {
 		var offset int32
 		var size int32 = int32(len(res))
 		if size == in.GetPaging().GetLimit() {
@@ -1148,7 +1170,7 @@ func (m *IntPointTxnDefaultServer) List(ctx context.Context, in *ListIntPointReq
 			res = res[:size]
 			offset = in.GetPaging().GetOffset() + size
 		}
-		resPaging = &query1.PageInfo{Offset: offset}
+		resPaging = &query1.PageInfo{Offset: offset, Size: *totalCnt}
 	}
 	out := &ListIntPointResponse{Results: res, PageInfo: resPaging}
 	if custom, ok := interface{}(in).(IntPointTxnIntPointWithAfterList); ok {
@@ -1277,7 +1299,7 @@ func (m *CircleServiceDefaultServer) List(ctx context.Context, in *ListCircleReq
 			return nil, err
 		}
 	}
-	res, err := DefaultListCircle(ctx, db)
+	res, err := DefaultListCircle(ctx, db, nil)
 	if err != nil {
 		return nil, err
 	}
