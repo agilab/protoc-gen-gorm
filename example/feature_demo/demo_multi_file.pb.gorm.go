@@ -211,16 +211,16 @@ func DefaultCreateExternalChild(ctx context.Context, in *ExternalChild, db *gorm
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeCreateWithContext); ok {
+		if db, err = hook.BeforeCreateWithContext(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterCreateWithContext); ok {
+		if err = hook.AfterCreateWithContext(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -228,11 +228,11 @@ func DefaultCreateExternalChild(ctx context.Context, in *ExternalChild, db *gorm
 	return &pbResponse, err
 }
 
-type ExternalChildORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type ExternalChildORMWithBeforeCreateWithContext interface {
+	BeforeCreateWithContext(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type ExternalChildORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type ExternalChildORMWithAfterCreateWithContext interface {
+	AfterCreateWithContext(context.Context, *gorm1.DB) error
 }
 
 // DefaultReadExternalChild executes a basic gorm read call
@@ -294,8 +294,8 @@ func DefaultDeleteExternalChild(ctx context.Context, in *ExternalChild, db *gorm
 	if ormObj.Id == "" {
 		return errors.New("A non-zero ID value is required for a delete call")
 	}
-	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeDelete); ok {
-		if db, err = hook.BeforeDelete(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeDeleteWithContext); ok {
+		if db, err = hook.BeforeDeleteWithContext(ctx, db); err != nil {
 			return err
 		}
 	}
@@ -303,17 +303,17 @@ func DefaultDeleteExternalChild(ctx context.Context, in *ExternalChild, db *gorm
 	if err != nil {
 		return err
 	}
-	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterDelete); ok {
-		err = hook.AfterDelete(ctx, db)
+	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterDeleteWithContext); ok {
+		err = hook.AfterDeleteWithContext(ctx, db)
 	}
 	return err
 }
 
-type ExternalChildORMWithBeforeDelete interface {
-	BeforeDelete(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type ExternalChildORMWithBeforeDeleteWithContext interface {
+	BeforeDeleteWithContext(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type ExternalChildORMWithAfterDelete interface {
-	AfterDelete(context.Context, *gorm1.DB) error
+type ExternalChildORMWithAfterDeleteWithContext interface {
+	AfterDeleteWithContext(context.Context, *gorm1.DB) error
 }
 
 func DefaultDeleteExternalChildSet(ctx context.Context, in []*ExternalChild, db *gorm1.DB) error {
@@ -366,17 +366,12 @@ func DefaultStrictUpdateExternalChild(ctx context.Context, in *ExternalChild, db
 	var count int64
 	lockedRow := &ExternalChildORM{}
 	count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("id=?", ormObj.Id).First(lockedRow).RowsAffected
-	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeStrictUpdateCleanup); ok {
-		if db, err = hook.BeforeStrictUpdateCleanup(ctx, db); err != nil {
-			return nil, err
-		}
-	}
 	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithBeforeStrictUpdateSave); ok {
 		if db, err = hook.BeforeStrictUpdateSave(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Save(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(ExternalChildORMWithAfterStrictUpdateSave); ok {
@@ -394,67 +389,11 @@ func DefaultStrictUpdateExternalChild(ctx context.Context, in *ExternalChild, db
 	return &pbResponse, err
 }
 
-type ExternalChildORMWithBeforeStrictUpdateCleanup interface {
-	BeforeStrictUpdateCleanup(context.Context, *gorm1.DB) (*gorm1.DB, error)
-}
 type ExternalChildORMWithBeforeStrictUpdateSave interface {
 	BeforeStrictUpdateSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type ExternalChildORMWithAfterStrictUpdateSave interface {
 	AfterStrictUpdateSave(context.Context, *gorm1.DB) error
-}
-
-// DefaultReplaceExternalChild executes a basic gorm update call with replace behavior
-func DefaultReplaceExternalChild(ctx context.Context, in *ExternalChild, db *gorm1.DB) (*ExternalChild, error) {
-	if in == nil {
-		return nil, errors.New("Nil argument to DefaultReplaceExternalChild")
-	}
-
-	var err error
-
-	if hook, ok := interface{}(in).(interface {
-		ValidateDeniedFields() map[string][]string
-	}); ok {
-		ignoreFields := hook.ValidateDeniedFields()["PUT"]
-		if len(ignoreFields) > 0 {
-			if hook, ok := interface{}(in).(interface {
-				BeforeReplaceRead(context.Context, *gorm1.DB) (*gorm1.DB, error)
-			}); ok {
-				if db, err = hook.BeforeReplaceRead(ctx, db); err != nil {
-					return nil, err
-				}
-			}
-			pbReadRes, err := DefaultReadExternalChild(ctx, &ExternalChild{Id: in.GetId()}, db)
-			if err != nil {
-				return nil, err
-			}
-
-			updateMask := &field_mask1.FieldMask{Paths: ignoreFields}
-			if _, err := DefaultApplyFieldMaskExternalChild(ctx, in, pbReadRes, updateMask, "", db, ""); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	if hook, ok := interface{}(in).(interface {
-		BeforeReplaceSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
-	}); ok {
-		if db, err = hook.BeforeReplaceSave(ctx, db); err != nil {
-			return nil, err
-		}
-	}
-	pbResponse, err := DefaultStrictUpdateExternalChild(ctx, in, db)
-	if err != nil {
-		return nil, err
-	}
-	if hook, ok := interface{}(in).(interface {
-		AfterReplaceSave(context.Context, *ExternalChild, *gorm1.DB) error
-	}); ok {
-		if err = hook.AfterReplaceSave(ctx, in, db); err != nil {
-			return nil, err
-		}
-	}
-	return pbResponse, nil
 }
 
 // DefaultPatchExternalChild executes a basic gorm update call with patch behavior
@@ -479,7 +418,7 @@ func DefaultPatchExternalChild(ctx context.Context, in *ExternalChild, updateMas
 			return nil, err
 		}
 	}
-	if _, err := DefaultApplyFieldMaskExternalChild(ctx, &pbObj, in, updateMask, "", db, "PATCH"); err != nil {
+	if _, err := DefaultApplyFieldMaskExternalChild(ctx, &pbObj, in, updateMask, "", db); err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&pbObj).(ExternalChildWithBeforePatchSave); ok {
@@ -513,31 +452,15 @@ type ExternalChildWithAfterPatchSave interface {
 }
 
 // DefaultApplyFieldMaskExternalChild patches an pbObject with patcher according to a field mask.
-func DefaultApplyFieldMaskExternalChild(ctx context.Context, patchee *ExternalChild, patcher *ExternalChild, updateMask *field_mask1.FieldMask, prefix string, db *gorm1.DB, keyOfDeniedFields string) (*ExternalChild, error) {
+func DefaultApplyFieldMaskExternalChild(ctx context.Context, patchee *ExternalChild, patcher *ExternalChild, updateMask *field_mask1.FieldMask, prefix string, db *gorm1.DB) (*ExternalChild, error) {
 	if patcher == nil {
 		return nil, nil
 	} else if patchee == nil {
 		return nil, errors.New("Patchee inputs to DefaultApplyFieldMaskExternalChild must be non-nil")
 	}
-	var ignoreFields map[string]bool
-	if keyOfDeniedFields != "" {
-		if hook, ok := interface{}(patchee).(interface {
-			ValidateDeniedFields() map[string][]string
-		}); ok {
-			deniedFields := hook.ValidateDeniedFields()[keyOfDeniedFields]
-			if len(deniedFields) > 0 {
-				for _, f := range deniedFields {
-					ignoreFields[f] = true
-				}
-			}
-		}
-	}
 	var err error
 	for _, f := range updateMask.Paths {
 		if f == prefix+"Id" {
-			if ignoreFields["Id"] {
-				continue
-			}
 			patchee.Id = patcher.Id
 			continue
 		}
@@ -610,16 +533,16 @@ func DefaultCreateBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB) (*Bl
 	if err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeCreate); ok {
-		if db, err = hook.BeforeCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeCreateWithContext); ok {
+		if db, err = hook.BeforeCreateWithContext(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Create(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Create(&ormObj).Error; err != nil {
 		return nil, err
 	}
-	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterCreate); ok {
-		if err = hook.AfterCreate(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterCreateWithContext); ok {
+		if err = hook.AfterCreateWithContext(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -627,11 +550,11 @@ func DefaultCreateBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB) (*Bl
 	return &pbResponse, err
 }
 
-type BlogPostORMWithBeforeCreate interface {
-	BeforeCreate(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type BlogPostORMWithBeforeCreateWithContext interface {
+	BeforeCreateWithContext(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type BlogPostORMWithAfterCreate interface {
-	AfterCreate(context.Context, *gorm1.DB) error
+type BlogPostORMWithAfterCreateWithContext interface {
+	AfterCreateWithContext(context.Context, *gorm1.DB) error
 }
 
 // DefaultReadBlogPost executes a basic gorm read call
@@ -693,8 +616,8 @@ func DefaultDeleteBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB) erro
 	if ormObj.Id == 0 {
 		return errors.New("A non-zero ID value is required for a delete call")
 	}
-	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeDelete); ok {
-		if db, err = hook.BeforeDelete(ctx, db); err != nil {
+	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeDeleteWithContext); ok {
+		if db, err = hook.BeforeDeleteWithContext(ctx, db); err != nil {
 			return err
 		}
 	}
@@ -702,17 +625,17 @@ func DefaultDeleteBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB) erro
 	if err != nil {
 		return err
 	}
-	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterDelete); ok {
-		err = hook.AfterDelete(ctx, db)
+	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterDeleteWithContext); ok {
+		err = hook.AfterDeleteWithContext(ctx, db)
 	}
 	return err
 }
 
-type BlogPostORMWithBeforeDelete interface {
-	BeforeDelete(context.Context, *gorm1.DB) (*gorm1.DB, error)
+type BlogPostORMWithBeforeDeleteWithContext interface {
+	BeforeDeleteWithContext(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
-type BlogPostORMWithAfterDelete interface {
-	AfterDelete(context.Context, *gorm1.DB) error
+type BlogPostORMWithAfterDeleteWithContext interface {
+	AfterDeleteWithContext(context.Context, *gorm1.DB) error
 }
 
 func DefaultDeleteBlogPostSet(ctx context.Context, in []*BlogPost, db *gorm1.DB) error {
@@ -765,17 +688,12 @@ func DefaultStrictUpdateBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB
 	var count int64
 	lockedRow := &BlogPostORM{}
 	count = db.Model(&ormObj).Set("gorm:query_option", "FOR UPDATE").Where("id=?", ormObj.Id).First(lockedRow).RowsAffected
-	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeStrictUpdateCleanup); ok {
-		if db, err = hook.BeforeStrictUpdateCleanup(ctx, db); err != nil {
-			return nil, err
-		}
-	}
 	if hook, ok := interface{}(&ormObj).(BlogPostORMWithBeforeStrictUpdateSave); ok {
 		if db, err = hook.BeforeStrictUpdateSave(ctx, db); err != nil {
 			return nil, err
 		}
 	}
-	if err = db.Save(&ormObj).Error; err != nil {
+	if err = db.Set("gorm:save_associations", false).Save(&ormObj).Error; err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&ormObj).(BlogPostORMWithAfterStrictUpdateSave); ok {
@@ -793,67 +711,11 @@ func DefaultStrictUpdateBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB
 	return &pbResponse, err
 }
 
-type BlogPostORMWithBeforeStrictUpdateCleanup interface {
-	BeforeStrictUpdateCleanup(context.Context, *gorm1.DB) (*gorm1.DB, error)
-}
 type BlogPostORMWithBeforeStrictUpdateSave interface {
 	BeforeStrictUpdateSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
 }
 type BlogPostORMWithAfterStrictUpdateSave interface {
 	AfterStrictUpdateSave(context.Context, *gorm1.DB) error
-}
-
-// DefaultReplaceBlogPost executes a basic gorm update call with replace behavior
-func DefaultReplaceBlogPost(ctx context.Context, in *BlogPost, db *gorm1.DB) (*BlogPost, error) {
-	if in == nil {
-		return nil, errors.New("Nil argument to DefaultReplaceBlogPost")
-	}
-
-	var err error
-
-	if hook, ok := interface{}(in).(interface {
-		ValidateDeniedFields() map[string][]string
-	}); ok {
-		ignoreFields := hook.ValidateDeniedFields()["PUT"]
-		if len(ignoreFields) > 0 {
-			if hook, ok := interface{}(in).(interface {
-				BeforeReplaceRead(context.Context, *gorm1.DB) (*gorm1.DB, error)
-			}); ok {
-				if db, err = hook.BeforeReplaceRead(ctx, db); err != nil {
-					return nil, err
-				}
-			}
-			pbReadRes, err := DefaultReadBlogPost(ctx, &BlogPost{Id: in.GetId()}, db)
-			if err != nil {
-				return nil, err
-			}
-
-			updateMask := &field_mask1.FieldMask{Paths: ignoreFields}
-			if _, err := DefaultApplyFieldMaskBlogPost(ctx, in, pbReadRes, updateMask, "", db, ""); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	if hook, ok := interface{}(in).(interface {
-		BeforeReplaceSave(context.Context, *gorm1.DB) (*gorm1.DB, error)
-	}); ok {
-		if db, err = hook.BeforeReplaceSave(ctx, db); err != nil {
-			return nil, err
-		}
-	}
-	pbResponse, err := DefaultStrictUpdateBlogPost(ctx, in, db)
-	if err != nil {
-		return nil, err
-	}
-	if hook, ok := interface{}(in).(interface {
-		AfterReplaceSave(context.Context, *BlogPost, *gorm1.DB) error
-	}); ok {
-		if err = hook.AfterReplaceSave(ctx, in, db); err != nil {
-			return nil, err
-		}
-	}
-	return pbResponse, nil
 }
 
 // DefaultPatchBlogPost executes a basic gorm update call with patch behavior
@@ -878,7 +740,7 @@ func DefaultPatchBlogPost(ctx context.Context, in *BlogPost, updateMask *field_m
 			return nil, err
 		}
 	}
-	if _, err := DefaultApplyFieldMaskBlogPost(ctx, &pbObj, in, updateMask, "", db, "PATCH"); err != nil {
+	if _, err := DefaultApplyFieldMaskBlogPost(ctx, &pbObj, in, updateMask, "", db); err != nil {
 		return nil, err
 	}
 	if hook, ok := interface{}(&pbObj).(BlogPostWithBeforePatchSave); ok {
@@ -912,45 +774,23 @@ type BlogPostWithAfterPatchSave interface {
 }
 
 // DefaultApplyFieldMaskBlogPost patches an pbObject with patcher according to a field mask.
-func DefaultApplyFieldMaskBlogPost(ctx context.Context, patchee *BlogPost, patcher *BlogPost, updateMask *field_mask1.FieldMask, prefix string, db *gorm1.DB, keyOfDeniedFields string) (*BlogPost, error) {
+func DefaultApplyFieldMaskBlogPost(ctx context.Context, patchee *BlogPost, patcher *BlogPost, updateMask *field_mask1.FieldMask, prefix string, db *gorm1.DB) (*BlogPost, error) {
 	if patcher == nil {
 		return nil, nil
 	} else if patchee == nil {
 		return nil, errors.New("Patchee inputs to DefaultApplyFieldMaskBlogPost must be non-nil")
 	}
-	var ignoreFields map[string]bool
-	if keyOfDeniedFields != "" {
-		if hook, ok := interface{}(patchee).(interface {
-			ValidateDeniedFields() map[string][]string
-		}); ok {
-			deniedFields := hook.ValidateDeniedFields()[keyOfDeniedFields]
-			if len(deniedFields) > 0 {
-				for _, f := range deniedFields {
-					ignoreFields[f] = true
-				}
-			}
-		}
-	}
 	var err error
 	for _, f := range updateMask.Paths {
 		if f == prefix+"Id" {
-			if ignoreFields["Id"] {
-				continue
-			}
 			patchee.Id = patcher.Id
 			continue
 		}
 		if f == prefix+"Title" {
-			if ignoreFields["Title"] {
-				continue
-			}
 			patchee.Title = patcher.Title
 			continue
 		}
 		if f == prefix+"Author" {
-			if ignoreFields["Author"] {
-				continue
-			}
 			patchee.Author = patcher.Author
 			continue
 		}
